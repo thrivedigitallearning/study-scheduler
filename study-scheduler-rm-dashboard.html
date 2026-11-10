@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Study Scheduler RM Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EEF4F0; --grid:#CFE0D6; --ink:#1E3A34; --ink-soft:#4D6B63; --line:#D3E3DA;
+  --card:#FFFFFF; --hi:#CDEBDC; --hi-ink:#1E3A34; --go:#3E9C7A; --go-soft:#DCEFE5; --pen:#C4553F; --pen-soft:#F8E3DD;
+  --warn:#9A6A12; --warn-soft:#FAEFD6; --field:#FFFFFF; --focus:#2B7A8C;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#121C19; --grid:#22332D; --ink:#E3EFE9; --ink-soft:#9DB8AE; --line:#2C3D37;
+    --card:#17241F; --hi:#2F5A4B; --hi-ink:#E3EFE9; --go:#6CCBA5; --go-soft:#1B3A30; --pen:#F08A72; --pen-soft:#3D2420;
+    --warn:#E8B85A; --warn-soft:#3A2F17; --field:#101915; --focus:#7FC3D4; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121C19; --grid:#22332D; --ink:#E3EFE9; --ink-soft:#9DB8AE; --line:#2C3D37;
+  --card:#17241F; --hi:#2F5A4B; --hi-ink:#E3EFE9; --go:#6CCBA5; --go-soft:#1B3A30; --pen:#F08A72; --pen-soft:#3D2420;
+  --warn:#E8B85A; --warn-soft:#3A2F17; --field:#101915; --focus:#7FC3D4; color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+body{
+  margin:0; color:var(--ink); background-color:var(--paper);
+  background-image:radial-gradient(var(--grid) 1.3px,transparent 1.3px); background-size:20px 20px;
+  font:16px/1.55 "Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+.wrap{max-width:960px;margin:0 auto;padding:28px 16px 64px}
+h1,h2,h3,h4{font-family:"Bricolage Grotesque","Atkinson Hyperlegible",system-ui,sans-serif;line-height:1.15;margin:0}
+h1{font-size:clamp(1.9rem,5vw,2.8rem);font-weight:800;letter-spacing:-.02em}
+h1 .mark{color:var(--go)}
+h2{font-size:1.5rem;font-weight:800;margin-bottom:6px}
+h3{font-size:1.15rem;font-weight:600;margin-bottom:8px}
+h4{font-size:1rem;font-weight:600;margin-bottom:6px}
+p{margin:0 0 12px}
+.sub{color:var(--ink-soft);max-width:60ch;margin-top:8px}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;margin-bottom:20px}
+.status{font-size:.85rem;color:var(--ink-soft);display:flex;align-items:center;gap:8px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--pen)}
+.dot.ok{background:var(--go)}
+nav{position:sticky;top:0;z-index:5;background:var(--paper);margin:0 -16px 20px;padding:10px 16px;border-bottom:1.5px solid var(--line);overflow-x:auto;white-space:nowrap}
+nav button{font:inherit;font-weight:700;background:none;border:0;color:var(--ink-soft);padding:8px 12px;border-radius:6px;cursor:pointer}
+nav button[aria-current="page"]{color:var(--hi-ink);background:var(--hi)}
+.sheet{background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:20px;margin-bottom:18px}
+.lead{max-width:62ch;color:var(--ink-soft);margin-bottom:18px}
+.muted{color:var(--ink-soft);font-size:.9rem}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.85rem;font-weight:700;color:var(--ink-soft);flex:1 1 160px;min-width:0}
+input,select,textarea{font:inherit;font-size:1rem;color:var(--ink);background:var(--field);border:1.5px solid var(--line);border-radius:6px;padding:8px 10px;width:100%;max-width:100%}
+textarea{min-height:72px;resize:vertical}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.btn{font:inherit;font-weight:700;border-radius:6px;padding:9px 14px;cursor:pointer;border:2px solid var(--ink);background:var(--ink);color:var(--paper);text-decoration:none;display:inline-block}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.small{padding:4px 10px;font-size:.85rem}
+.btn.del{border-color:transparent;background:transparent;color:var(--pen);padding:4px 8px}
+.btn.link{border:0;background:none;color:var(--focus);padding:0;text-decoration:underline;font-weight:700}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.empty{border:2px dashed var(--line);border-radius:10px;padding:20px;text-align:center;color:var(--ink-soft)}
+.callout{background:var(--hi);color:var(--hi-ink);border-radius:8px;padding:12px 14px;margin-top:12px}
+.callout.warn{background:var(--warn-soft);color:var(--ink);border-left:4px solid var(--warn)}
+.callout p:last-child{margin-bottom:0}
+.tag{display:inline-block;font-size:.75rem;font-weight:700;border-radius:999px;padding:2px 9px;background:var(--grid);color:var(--ink);white-space:nowrap}
+.tag.go{background:var(--go-soft);color:var(--ink);border:1px solid var(--go)}
+.tag.pen{background:var(--pen-soft);color:var(--pen)}
+.tag.warn{background:var(--warn-soft);color:var(--warn)}
+.bar{height:10px;border-radius:5px;background:var(--grid);overflow:hidden;min-width:60px}
+.bar span{display:block;height:100%;background:var(--go);transition:width .25s}
+.item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);flex-wrap:wrap}
+.item:first-child{border-top:0}
+.item .grow{flex:1 1 220px;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:.9rem;border:1.5px solid var(--line);background:var(--field);color:var(--ink);border-radius:999px;padding:6px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink);font-weight:700}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:8px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .2s;z-index:30;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+footer{margin-top:30px;text-align:center}
+
+/* week */
+.weekbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.weekbar .ttl{flex:1 1 200px}
+.arrow{font:inherit;font-size:1.3rem;font-weight:800;width:42px;height:42px;border-radius:50%;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:18px}
+.stepcard{background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.stepcard.done{border-color:var(--go)}
+.stepcard.next{border:2.5px solid var(--ink)}
+.stepcard .num{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+.stepcard.done .num{color:var(--go)}
+.stepcard .btn{align-self:flex-start;margin-top:auto}
+.crow{display:grid;grid-template-columns:minmax(110px,1.2fr) 2fr auto;gap:12px;align-items:center;padding:7px 0}
+.daygrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.dcol{background:var(--field);border:1.5px solid var(--line);border-radius:8px;padding:8px;min-height:90px}
+.dcol.today{border:2px solid var(--ink)}
+.dcol h4{font-size:.92rem;display:flex;justify-content:space-between;gap:4px;margin:0 0 2px}
+.dcol h4 small{font-family:"Atkinson Hyperlegible",sans-serif;font-weight:400;color:var(--ink-soft);font-size:.75rem}
+.blk{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--focus);border-radius:6px;padding:6px 7px;margin-top:6px;font-size:.82rem;line-height:1.3;overflow-wrap:anywhere}
+.blk.logged{border-left-color:var(--go);opacity:.85}
+.blk .t{font-weight:700}
+.blk .acts{margin-top:5px;display:flex;gap:4px;flex-wrap:wrap}
+.blk .acts .btn{padding:2px 8px;font-size:.75rem}
+.dcol .none{font-size:.8rem;color:var(--ink-soft);margin-top:4px}
+@media (max-width:760px){.daygrid{grid-template-columns:1fr}.dcol{min-height:0}}
+
+/* wizard */
+.wiz-steps{display:flex;gap:6px;margin:0 0 16px;flex-wrap:wrap}
+.wiz-steps span{flex:1 1 90px;font-size:.8rem;font-weight:700;color:var(--ink-soft);border-top:4px solid var(--line);padding-top:6px}
+.wiz-steps span.on{color:var(--ink);border-top-color:var(--ink)}
+.wiz-steps span.past{color:var(--go);border-top-color:var(--go)}
+.wiz-nav{display:flex;justify-content:space-between;gap:10px;margin-top:18px;flex-wrap:wrap}
+.choice{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.choice button{font:inherit;text-align:left;border:1.5px solid var(--line);background:var(--field);color:var(--ink);border-radius:8px;padding:12px;cursor:pointer}
+.choice button[aria-pressed="true"]{border:2.5px solid var(--ink);background:var(--hi);color:var(--hi-ink);font-weight:700}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:.8rem;color:var(--ink-soft)}
+.scroll{overflow-x:auto}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(10,20,17,.55);z-index:20;display:flex;align-items:flex-start;justify-content:center;padding:40px 12px;overflow-y:auto}
+.modal-card{background:var(--card);border-radius:12px;padding:22px;width:100%;max-width:560px;border:1.5px solid var(--line)}
+
+/* RM */
+.roster{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px}
+.scard{background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:16px;cursor:pointer;text-align:left;font:inherit;color:var(--ink);display:flex;flex-direction:column;gap:8px}
+.scard:hover{border-color:var(--ink)}
+.scard.attn{border-left:6px solid var(--pen)}
+.scard .nm{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:1.2rem}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:.9rem}
+.kv b{font-weight:700;color:var(--ink-soft)}
+.quote{border-left:3px solid var(--go);padding-left:10px;margin:4px 0 10px;white-space:pre-wrap}
+.quote.note{border-left-color:var(--pen)}
+details.wk{border-top:1px solid var(--line);padding:12px 0}
+details.wk summary{cursor:pointer;font-weight:700;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.mode{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.mode button{font:inherit;text-align:left;background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:20px;cursor:pointer;color:var(--ink)}
+.mode button:hover{border-color:var(--ink)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{nav,.btn,.status,footer{display:none!important}body{background:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Study Scheduler <span class="mark">RM Dashboard</span></h1>
+      <p class="sub" id="sub"></p>
+    </div>
+    <div class="status" role="status" aria-live="polite"><span class="dot ok" id="dot"></span><span id="saveText">Saved in this browser</span></div>
+  </header>
+  <nav id="nav" aria-label="Sections"></nav>
+  <main id="main"></main>
+  <footer id="foot"></footer>
+</div>
+<div class="modal" id="modal" hidden><div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="mTitle" id="modalCard"></div></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ================= constants ================= */
+const APP = "scholar-study-scheduler";
+const K_S = "sss-scholar-v1", K_R = "sss-rm-v1", K_MODE = "sss-mode";
+const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const TYPES = ["Exam","Quiz","Assignment","Paper","Project","Lab","Presentation","Other"];
+const TESTS = ["Exam","Quiz"];
+const PRACTICES = [
+  "Self-quizzing or practice test",
+  "Practice problems",
+  "Flashcards",
+  "Explaining it out loud or teaching someone",
+  "Summarizing notes from memory",
+  "Rereading notes or the textbook",
+  "Reading assigned material",
+  "Writing or working on a paper or project",
+  "Office hours",
+  "Tutoring or Tutor.com",
+  "Study group",
+  "Watching lecture videos",
+  "Other"
+];
+const ACTIVE = new Set(PRACTICES.slice(0,5));
+const OBSTACLES = ["Work shifts","Family responsibilities","Putting it off","Phone or social media","Not enough sleep","Too much due at once","The material was confusing","Feeling sick or run down","Plans changed","Other"];
+const LENGTHS = [25,30,45,60,90,120];
+const GOAL_LABEL = {yes:"Yes, I met my goals", partly:"Partly", no:"No, I fell short"};
+const GOAL_SHORT = {yes:"Met goals", partly:"Partly met goals", no:"Missed goals"};
+
+/* ================= helpers ================= */
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid = () => Math.random().toString(36).slice(2,10);
+const str = v => typeof v === "string" ? v.slice(0, 5000) : (typeof v === "number" ? String(v) : "");
+const num = v => { const n = parseFloat(v); return isFinite(n) && n >= 0 ? n : 0; };
+const arr = v => Array.isArray(v) ? v : [];
+const isObj = v => v && typeof v === "object" && !Array.isArray(v);
+const isDate = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
+const pad = n => String(n).padStart(2,"0");
+const iso = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const parse = s => { const [y,m,d] = String(s).split("-").map(Number); return new Date(y, m-1, d); };
+const today = () => { const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); };
+const addDays = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+const monday = d => addDays(d, -((d.getDay()+6)%7));
+const wkOf = s => iso(monday(typeof s === "string" ? parse(s) : s));
+const thisWk = () => wkOf(today());
+const shiftWk = (wk, n) => iso(addDays(parse(wk), 7*n));
+const dayDiff = (a,b) => Math.round((a-b)/864e5);
+const fmt = d => (typeof d === "string" ? parse(d) : d).toLocaleDateString(undefined,{weekday:"short", month:"short", day:"numeric"});
+const md = d => (typeof d === "string" ? parse(d) : d).toLocaleDateString(undefined,{month:"short", day:"numeric"});
+const weekLabel = wk => md(wk) + " to " + md(addDays(parse(wk),6));
+const dayDate = (wk, i) => iso(addDays(parse(wk), i));
+function hrs(min){ const h = Math.round(min/60*10)/10; return h + (h===1 ? " hr" : " hrs"); }
+function hNum(min){ return String(Math.round(min/60*10)/10); }
+function t12(hhmm){ if(!hhmm) return ""; const [h,m] = hhmm.split(":").map(Number); return ((h%12)||12) + ":" + pad(m) + (h>=12 ? " PM" : " AM"); }
+function mins(n){ return n < 60 ? n + " min" : (n % 60 ? Math.floor(n/60) + " hr " + (n%60) + " min" : (n/60) + (n===60 ? " hr" : " hrs")); }
+function load(k, d){ try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : d; } catch(e){ return d; } }
+function store(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch(e){ return false; } }
+function toast(m){ const t = $("#toast"); t.textContent = m; t.classList.add("show"); clearTimeout(toast._t); toast._t = setTimeout(()=>t.classList.remove("show"), 2200); }
+function armed(btn, label){
+  if(btn.dataset.armed) return true;
+  btn.dataset.armed = "1"; const orig = btn.textContent; btn.textContent = label || "Tap again to confirm";
+  setTimeout(()=>{ if(btn.isConnected && btn.dataset.armed){ delete btn.dataset.armed; btn.textContent = orig; } }, 4000);
+  return false;
+}
+function download(name, text, type){
+  try {
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], {type:type||"application/json"})); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 3000); return true;
+  } catch(e){ return false; }
+}
+async function copy(text){ try { await navigator.clipboard.writeText(text); return true; } catch(e){ return false; } }
+const slug = s => String(s||"").trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40);
+function setSaved(ok){ $("#dot").className = "dot" + (ok ? " ok" : ""); $("#saveText").textContent = ok ? "Saved in this browser" : "Couldn't save. Download a backup now."; }
+
+/* ================= data model ================= */
+function blankScholar(){ return {id: uid()+uid(), profile:{name:"", school:"", rm:""}, courses:[], deadlines:[], weeks:{}, lastBackup:"", lastSent:""}; }
+function blankWeek(){ return {goals:{}, blocks:[], sessions:[], planned:false, plannedAt:"", reflection:null}; }
+function normRef(r){
+  if(!isObj(r)) return null;
+  return {goalMet: ["yes","partly","no"].includes(r.goalMet) ? r.goalMet : "", helped:str(r.helped), wentWell:str(r.wentWell),
+    obstacles: arr(r.obstacles).map(str).filter(Boolean).slice(0,12), obstacleNote:str(r.obstacleNote), change:str(r.change), rmNote:str(r.rmNote), at:str(r.at)};
+}
+function normScholar(o){
+  const b = blankScholar(); if(!isObj(o)) return b;
+  if(typeof o.id === "string" && o.id) b.id = o.id.slice(0,40);
+  if(isObj(o.profile)) ["name","school","rm"].forEach(k=>b.profile[k] = str(o.profile[k]).slice(0,120));
+  b.courses = arr(o.courses).filter(isObj).map(c=>({id:str(c.id)||uid(), name:str(c.name).slice(0,120), credits:num(c.credits), goal:num(c.goal)})).slice(0,30);
+  b.deadlines = arr(o.deadlines).filter(d=>isObj(d) && isDate(d.date)).map(d=>({id:str(d.id)||uid(), courseId:str(d.courseId), course:str(d.course).slice(0,120), title:str(d.title).slice(0,200), type: TYPES.includes(d.type) ? d.type : "Other", date:d.date, done:!!d.done, ready: Math.min(5, Math.round(num(d.ready)))})).slice(0,600);
+  if(isObj(o.weeks)) Object.keys(o.weeks).filter(isDate).slice(0,400).forEach(k=>{
+    const w = o.weeks[k]; if(!isObj(w)) return; const nw = blankWeek();
+    if(isObj(w.goals)) Object.keys(w.goals).slice(0,30).forEach(c=>nw.goals[c] = num(w.goals[c]));
+    nw.blocks = arr(w.blocks).filter(isObj).map(x=>({id:str(x.id)||uid(), day: Math.max(0, Math.min(6, Math.round(num(x.day)))), courseId:str(x.courseId), course:str(x.course).slice(0,120), minutes: num(x.minutes)||30, time: /^\d{2}:\d{2}$/.test(x.time||"") ? x.time : "", practice:str(x.practice).slice(0,80)})).slice(0,120);
+    nw.sessions = arr(w.sessions).filter(x=>isObj(x) && isDate(x.date)).map(x=>({id:str(x.id)||uid(), date:x.date, courseId:str(x.courseId), course:str(x.course).slice(0,120), minutes: num(x.minutes), practice:str(x.practice).slice(0,80), focus:str(x.focus).slice(0,20), note:str(x.note).slice(0,500), planId:str(x.planId)})).slice(0,300);
+    nw.planned = !!w.planned; nw.plannedAt = str(w.plannedAt); nw.reflection = normRef(w.reflection);
+    b.weeks[k] = nw;
+  });
+  b.lastBackup = str(o.lastBackup); b.lastSent = str(o.lastSent);
+  return b;
+}
+const wkData = (st, wk) => st.weeks[wk] || null;
+function wkMake(st, wk){ if(!st.weeks[wk]) st.weeks[wk] = blankWeek(); return st.weeks[wk]; }
+function cname(st, id, fallback){ const c = st.courses.find(x=>x.id===id); return c ? (c.name || "Untitled class") : (fallback || "Other"); }
+function goalsFor(st, wk){
+  const w = wkData(st, wk); const g = {};
+  if(w && Object.keys(w.goals).length){ Object.assign(g, w.goals); st.courses.forEach(c=>{ if(!(c.id in g)) g[c.id] = c.goal; }); }
+  else st.courses.forEach(c=>g[c.id] = c.goal);
+  return g;
+}
+function stats(st, wk){
+  const w = wkData(st, wk) || blankWeek();
+  const goals = goalsFor(st, wk);
+  const ids = new Set(Object.keys(goals).filter(k=>goals[k] > 0));
+  w.blocks.forEach(b=>ids.add(b.courseId||"other:"+b.course)); w.sessions.forEach(s=>ids.add(s.courseId||"other:"+s.course));
+  const rows = [...ids].map(id=>{
+    const fb = (w.sessions.find(s=>(s.courseId||"other:"+s.course)===id)||w.blocks.find(b=>(b.courseId||"other:"+b.course)===id)||{}).course;
+    return {id, name: cname(st, id, fb), goal: goals[id]||0,
+      planned: w.blocks.filter(b=>(b.courseId||"other:"+b.course)===id).reduce((a,b)=>a+b.minutes,0),
+      logged: w.sessions.filter(s=>(s.courseId||"other:"+s.course)===id).reduce((a,s)=>a+s.minutes,0)};
+  }).sort((a,b)=>b.goal-a.goal || a.name.localeCompare(b.name));
+  const goalRows = rows.filter(r=>r.goal>0);
+  const practices = {}; w.sessions.forEach(s=>{ const p = s.practice||"Not recorded"; practices[p] = (practices[p]||0) + s.minutes; });
+  const end = iso(addDays(parse(wk),6));
+  const dls = st.deadlines.filter(d=>d.date >= wk && d.date <= end).sort((a,b)=>a.date.localeCompare(b.date));
+  const loggedAll = w.sessions.reduce((a,s)=>a+s.minutes,0);
+  const activeMin = w.sessions.filter(s=>ACTIVE.has(s.practice)).reduce((a,s)=>a+s.minutes,0);
+  return {w, rows, goalRows, goalMin: goalRows.reduce((a,r)=>a+r.goal*60,0), planned: w.blocks.reduce((a,b)=>a+b.minutes,0), logged: loggedAll,
+    met: goalRows.length>0 && goalRows.every(r=>r.logged >= r.goal*60 - 0.5), metCount: goalRows.filter(r=>r.logged >= r.goal*60 - 0.5).length,
+    practices, days: new Set(w.sessions.map(s=>s.date)).size, sessions: w.sessions.length, dls, activeMin};
+}
+function blockLogged(w, b){ return w.sessions.some(s=>s.planId===b.id); }
+function weeksWithData(st){ return Object.keys(st.weeks).filter(k=>{ const w = st.weeks[k]; return w.planned || w.sessions.length || w.blocks.length || w.reflection; }).sort().reverse(); }
+
+/* ================= app state ================= */
+let MODE = "rm";
+let S = normScholar(load(K_S, null));
+let R = normRoster(load(K_R, null));
+let view = "week", viewWk = thisWk(), wiz = null, rmSel = null, rmSort = "attn", msg = "", pendingImport = null;
+function save(){ setSaved(store(K_S, S)); }
+function saveR(){ setSaved(store(K_R, R)); }
+
+function render(){
+  const nav = $("#nav"), main = $("#main"), foot = $("#foot");
+  if(!MODE){
+    $("#sub").textContent = "Plan your study time week by week, log what you actually do, and reflect on what's working.";
+    nav.hidden = true; foot.innerHTML = ""; main.innerHTML = vMode(); bindMode(); return;
+  }
+  nav.hidden = false;
+  if(MODE === "rm"){
+    $("#sub").textContent = "For Relationship Managers. Load the update files your scholars send you to see all their study planners in one place.";
+    nav.innerHTML = `<button data-v="rm" aria-current="${!rmSel ? "page" : "false"}">My scholars</button>${rmSel ? `<button aria-current="page">${esc((R.scholars[rmSel]||{data:{profile:{}}}).data.profile.name || "Scholar")}</button>` : ""}`;
+    $$("[data-v]", nav).forEach(b=>b.addEventListener("click", ()=>{ rmSel = null; msg = ""; render(); }));
+    foot.innerHTML = "";
+    if(rmSel && R.scholars[rmSel]){ main.innerHTML = vRmDetail(rmSel); bindRmDetail(rmSel); }
+    else { rmSel = null; main.innerHTML = vRm(); bindRm(); }
+    return;
+  }
+  $("#sub").textContent = "Plan your study time each week, log what you actually do, then look back on what worked.";
+  const tabs = [["week","My week"],["classes","My classes"],["history","Past weeks"],["share","Share & back up"]];
+  nav.innerHTML = tabs.map(([k,l])=>`<button data-v="${k}" aria-current="${view===k && !wiz ? "page" : "false"}">${l}</button>`).join("");
+  $$("[data-v]", nav).forEach(b=>b.addEventListener("click", ()=>{
+    if(wiz && !confirmLeave()) return;
+    wiz = null; view = b.dataset.v; msg = ""; pendingImport = null; if(view==="week") viewWk = thisWk(); render(); window.scrollTo({top:0});
+  }));
+  foot.innerHTML = "";
+  if(wiz){ main.innerHTML = vWiz(); bindWiz(); return; }
+  if(view === "week"){ main.innerHTML = vWeek(); bindWeek(); }
+  else if(view === "classes"){ main.innerHTML = vClasses(); bindClasses(); }
+  else if(view === "history"){ main.innerHTML = vHistory(); bindHistory(); }
+  else { main.innerHTML = vShare(); bindShare(); }
+}
+function confirmLeave(){ return true; }
+
+/* ================= mode chooser ================= */
+function vMode(){
+  return `<h2>Who's using this?</h2>
+  <p class="lead">Pick one. Your choice is remembered in this browser, and you can switch any time at the bottom of the page.</p>
+  <div class="mode">
+    <button data-mode="scholar"><h3>I'm a scholar</h3><p class="muted" style="margin:0">Plan my study week, log my study time, reflect, and send updates to my Relationship Manager.</p></button>
+    <button data-mode="rm"><h3>I'm a Relationship Manager</h3><p class="muted" style="margin:0">See the planners my scholars send me, all in one dashboard.</p></button>
+  </div>`;
+}
+function bindMode(){ $$("[data-mode]").forEach(b=>b.addEventListener("click", ()=>{ MODE = b.dataset.mode; store(K_MODE, MODE); view = "week"; viewWk = thisWk(); render(); })); }
+
+/* ================= scholar: week ================= */
+function vWeek(){
+  const wk = viewWk, cur = thisWk(), st = stats(S, wk), w = st.w;
+  const isCur = wk === cur, isPast = wk < cur, isFuture = wk > cur;
+  const rel = isCur ? "This week" : wk === shiftWk(cur,1) ? "Next week" : wk === shiftWk(cur,-1) ? "Last week" : isPast ? "Past week" : "Upcoming week";
+  const first = (S.profile.name||"").trim().split(/\s+/)[0];
+  const newbie = !S.courses.length && !weeksWithData(S).length;
+  const ref = w.reflection;
+  const unsent = ref && (!S.lastSent || S.lastSent < ref.at);
+  const prev = shiftWk(cur,-1), pw = wkData(S, prev);
+  const lastNeedsRef = isCur && pw && (pw.planned || pw.sessions.length) && !pw.reflection;
+  const nextStep = !w.planned && !isPast ? 1 : !ref && !isFuture ? (st.sessions ? 3 : 2) : unsent ? 4 : 0;
+  const todayIso = iso(today());
+
+  let html = "";
+  if(newbie) html += `<div class="sheet" style="border-left:6px solid var(--go)">
+    <h2>Welcome${first ? ", " + esc(first) : ""}</h2>
+    <p>Each week you'll do four quick things:</p>
+    <ol style="margin:0 0 14px;padding-left:20px">
+      <li><b>Plan</b> (Sunday or Monday, about 10 minutes): add what's due and block out study time.</li>
+      <li><b>Log</b> every time you study: how long, and how you studied.</li>
+      <li><b>Reflect</b> at the end of the week: did you meet your study goals, and what worked?</li>
+      <li><b>Send</b> your update to your Relationship Manager.</li>
+    </ol>
+    <button class="btn" data-act="plan">Plan my first week</button>
+  </div>`;
+  html += `<div class="weekbar">
+    <button class="arrow" data-act="prev" aria-label="Previous week">‹</button>
+    <div class="ttl"><span class="muted" style="font-weight:700">${rel}</span><h2 style="margin:0">${weekLabel(wk)}</h2></div>
+    <button class="arrow" data-act="next" aria-label="Next week">›</button>
+    ${!isCur ? `<button class="btn ghost small" data-act="now">Back to this week</button>` : ""}
+  </div>`;
+  if(lastNeedsRef) html += `<div class="callout warn" style="margin:0 0 16px"><p><b>You haven't reflected on last week yet.</b> It takes about 5 minutes, and it's what makes next week's plan better.</p><button class="btn small" data-act="reflectLast">Reflect on last week</button></div>`;
+  if(!newbie) html += `<div class="flow">
+    <div class="stepcard ${w.planned ? "done" : ""} ${nextStep===1 ? "next" : ""}"><span class="num">Step 1${w.planned ? " · done" : ""}</span><h3 style="margin:0">Plan</h3>
+      <p class="muted" style="margin:0">${w.planned ? hrs(st.planned) + " of study time planned. " + st.dls.length + " thing" + (st.dls.length===1 ? "" : "s") + " due." : isPast ? "No plan was made for this week." : "Add what's due and block out when you'll study."}</p>
+      <button class="btn ${w.planned ? "ghost" : ""} small" data-act="plan">${w.planned ? "Edit my plan" : "Plan this week"}</button></div>
+    <div class="stepcard ${nextStep===2 ? "next" : ""} ${st.sessions && (isPast || ref) ? "done" : ""}"><span class="num">Step 2</span><h3 style="margin:0">Log</h3>
+      <p class="muted" style="margin:0">${st.sessions ? st.sessions + " session" + (st.sessions===1 ? "" : "s") + ", " + hrs(st.logged) + " logged" + (st.goalMin ? " of your " + hrs(st.goalMin) + " goal" : "") + "." : isFuture ? "You'll log study time here once the week starts." : "Log every study session: how long, and how you studied."}</p>
+      <button class="btn ${nextStep===2 ? "" : "ghost"} small" data-act="log" ${isFuture ? "disabled" : ""}>Log study time</button></div>
+    <div class="stepcard ${ref ? "done" : ""} ${nextStep===3 ? "next" : ""}"><span class="num">Step 3${ref ? " · done" : ""}</span><h3 style="margin:0">Reflect</h3>
+      <p class="muted" style="margin:0">${ref ? esc(GOAL_SHORT[ref.goalMet]||"Reflection saved") + ". Next week: " + esc(ref.change.slice(0,90)) + (ref.change.length>90 ? "..." : "") : isFuture ? "Opens when the week starts." : "At the end of the week: did you meet your goals? What worked?"}</p>
+      <button class="btn ${nextStep===3 ? "" : "ghost"} small" data-act="reflect" ${isFuture ? "disabled" : ""}>${ref ? "Edit reflection" : "Reflect on my week"}</button></div>
+    <div class="stepcard ${ref && !unsent ? "done" : ""} ${nextStep===4 ? "next" : ""}"><span class="num">Step 4${ref && !unsent ? " · done" : ""}</span><h3 style="margin:0">Send to my RM</h3>
+      <p class="muted" style="margin:0">${S.lastSent ? "Last sent " + fmt(new Date(S.lastSent)) + "." : "You haven't sent an update yet."} ${unsent ? "Your reflection hasn't been sent yet." : ""}</p>
+      <button class="btn ${nextStep===4 ? "" : "ghost"} small" data-act="send">Send update</button></div>
+  </div>`;
+
+  if(st.rows.length) html += `<div class="sheet"><h3>Study hours: goal vs. logged</h3>
+    ${st.rows.map(r=>{ const pct = r.goal ? Math.min(100, r.logged/(r.goal*60)*100) : (r.logged ? 100 : 0); const ok = r.goal && r.logged >= r.goal*60 - 0.5;
+      return `<div class="crow"><span><b>${esc(r.name)}</b></span><div class="bar"><span style="width:${pct}%"></span></div><span class="muted" style="white-space:nowrap">${hNum(r.logged)} of ${r.goal ? r.goal : "–"} hrs ${ok ? `<span class="tag go">Goal met</span>` : ""}</span></div>`; }).join("")}
+    <p class="muted" style="margin:10px 0 0">Planned: ${hrs(st.planned)}. Logged: ${hrs(st.logged)}${st.goalMin ? ". Goal: " + hrs(st.goalMin) : ""}.</p></div>`;
+
+  html += `<div class="sheet"><div class="item" style="padding-top:0"><h3 style="margin:0">My study plan</h3>${!isPast ? `<button class="btn ghost small" data-act="plan">${w.blocks.length ? "Change plan" : "Add study time"}</button>` : ""}</div>
+    ${w.blocks.length || w.sessions.length ? `<div class="daygrid">${DAYS.map((d,i)=>{
+      const di = dayDate(wk,i); const bl = w.blocks.filter(b=>b.day===i).sort((a,b)=>(a.time||"99").localeCompare(b.time||"99"));
+      const extra = w.sessions.filter(s=>s.date===di && !s.planId);
+      const total = w.sessions.filter(s=>s.date===di).reduce((a,s)=>a+s.minutes,0);
+      return `<div class="dcol ${di===todayIso ? "today" : ""}"><h4>${d} ${md(di).split(" ").pop()}<small>${total ? hNum(total)+"h logged" : ""}</small></h4>
+        ${bl.map(b=>{ const done = blockLogged(w,b); return `<div class="blk ${done ? "logged" : ""}"><div class="t">${b.time ? t12(b.time) + ", " : ""}${mins(b.minutes)}</div><div>${esc(cname(S,b.courseId,b.course))}</div>${b.practice ? `<div class="muted">${esc(b.practice)}</div>` : ""}
+          <div class="acts">${done ? `<span class="tag go">Logged</span>` : di <= todayIso ? `<button class="btn small" data-act="logBlock" data-id="${b.id}">Log it</button>` : ""}</div></div>`; }).join("")}
+        ${extra.map(s=>`<div class="blk logged"><div class="t">Extra: ${mins(s.minutes)}</div><div>${esc(cname(S,s.courseId,s.course))}</div></div>`).join("")}
+        ${!bl.length && !extra.length ? `<div class="none">Nothing planned</div>` : ""}</div>`; }).join("")}</div>`
+    : `<div class="empty">${isPast ? "Nothing was planned or logged this week." : "No study time planned yet."}</div>`}
+  </div>`;
+
+  html += `<div class="sheet"><h3>Due this week</h3>${st.dls.length ? st.dls.map(d=>dlRow(d)).join("") : `<p class="muted" style="margin:0">Nothing due this week${w.planned ? "." : " that you've added yet."}</p>`}
+    ${(()=>{ const nx = S.deadlines.filter(d=>d.date > iso(addDays(parse(wk),6)) && d.date <= iso(addDays(parse(wk),13))).sort((a,b)=>a.date.localeCompare(b.date));
+      return nx.length ? `<h4 style="margin-top:16px">Coming up the week after</h4>${nx.map(d=>dlRow(d)).join("")}` : ""; })()}</div>`;
+
+  if(w.sessions.length) html += `<div class="sheet"><h3>What I logged</h3>${w.sessions.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(s=>`<div class="item"><span class="grow"><b>${esc(cname(S,s.courseId,s.course))}</b> <span class="muted">${fmt(s.date)}, ${mins(s.minutes)}</span><br><span class="muted">${esc(s.practice)}${s.focus ? ", " + esc(s.focus.toLowerCase()) : ""}${s.note ? ". " + esc(s.note) : ""}</span></span><button class="btn del" data-act="delSess" data-id="${s.id}">Delete</button></div>`).join("")}</div>`;
+  return html;
+}
+function dlRow(d){
+  const left = dayDiff(parse(d.date), today());
+  return `<div class="item"><label class="grow" style="display:flex;gap:10px;align-items:flex-start;cursor:pointer"><input type="checkbox" data-dl="${d.id}" ${d.done ? "checked" : ""} style="width:20px;height:20px;flex:none;margin-top:2px;accent-color:var(--go)"><span><b style="${d.done ? "text-decoration:line-through;opacity:.6" : ""}">${esc(d.title)}</b> <span class="muted">${esc(cname(S,d.courseId,d.course))}, ${esc(d.type)}</span></span></label>
+    <span class="${!d.done && left>=0 && left<=1 ? "tag pen" : !d.done && left<0 ? "tag warn" : "muted"}">${left===0 ? "Today" : left===1 ? "Tomorrow" : fmt(d.date)}${!d.done && left<0 ? ", past due" : ""}</span></div>`;
+}
+function bindWeek(){
+  const m = $("#main");
+  const act = (a, fn) => $$(`[data-act="${a}"]`, m).forEach(b=>b.addEventListener("click", ()=>fn(b)));
+  act("prev", ()=>{ viewWk = shiftWk(viewWk,-1); render(); });
+  act("next", ()=>{ viewWk = shiftWk(viewWk,1); render(); });
+  act("now", ()=>{ viewWk = thisWk(); render(); });
+  act("plan", ()=>startPlan(viewWk));
+  act("reflect", ()=>startReflect(viewWk));
+  act("reflectLast", ()=>startReflect(shiftWk(thisWk(),-1)));
+  act("log", ()=>openLog({wk:viewWk}));
+  act("logBlock", b=>openLog({wk:viewWk, planId:b.dataset.id}));
+  act("send", ()=>{ view = "share"; render(); setTimeout(()=>{ const el = $("#sendBox"); if(el) el.scrollIntoView({behavior:"smooth"}); }, 50); });
+  act("delSess", b=>{ if(!armed(b, "Tap again")) return; const w = wkData(S, viewWk); w.sessions = w.sessions.filter(s=>s.id!==b.dataset.id); save(); render(); });
+  $$("[data-dl]", m).forEach(cb=>cb.addEventListener("change", ()=>{ const d = S.deadlines.find(x=>x.id===cb.dataset.dl); if(d){ d.done = cb.checked; save(); render(); } }));
+}
+
+/* ================= log modal ================= */
+function openLog({wk, planId}){
+  if(!S.courses.length){ toast("Add your classes first"); startPlan(wk); return; }
+  const w = wkMake(S, wk);
+  const b = planId ? w.blocks.find(x=>x.id===planId) : null;
+  const t = iso(today()), end = iso(addDays(parse(wk),6));
+  const defDate = b ? dayDate(wk, b.day) : (t >= wk && t <= end ? t : wk);
+  const form = {course: b ? b.courseId : "", date: defDate, minutes: b ? b.minutes : 50, practice: "", focus: "", note: ""};
+  const card = $("#modalCard");
+  card.innerHTML = `<h2 id="mTitle">Log study time</h2>
+    <p class="muted">${b ? "Planned: " + esc(cname(S,b.courseId,b.course)) + ", " + mins(b.minutes) + (b.practice ? ", " + esc(b.practice) : "") + ". Log what you actually did." : "Log a study session, planned or not."}</p>
+    <div class="row">
+      <label class="f">Class<select id="lgCourse">${S.courses.map(c=>`<option value="${c.id}" ${c.id===form.course ? "selected" : ""}>${esc(c.name)}</option>`).join("")}</select></label>
+      <label class="f" style="flex:0 1 160px">Date<input type="date" id="lgDate" value="${form.date}" max="${t}"></label>
+      <label class="f" style="flex:0 1 120px">Minutes<input type="number" id="lgMin" min="5" max="600" step="5" value="${form.minutes}"></label>
+    </div>
+    <div style="margin-top:14px"><div class="muted" style="font-weight:700;margin-bottom:6px">How did you study? <span style="color:var(--pen)">(required)</span></div>
+      <div class="chips" id="lgPr">${PRACTICES.map(p=>`<button type="button" class="chip" data-p="${esc(p)}" aria-pressed="${b && b.practice===p}">${esc(p)}</button>`).join("")}</div></div>
+    <div style="margin-top:14px"><div class="muted" style="font-weight:700;margin-bottom:6px">How focused were you? <span style="font-weight:400">(optional)</span></div>
+      <div class="chips" id="lgFo">${["Very focused","Mostly focused","Distracted"].map(f=>`<button type="button" class="chip" data-f="${f}" aria-pressed="false">${f}</button>`).join("")}</div></div>
+    <label class="f" style="margin-top:14px">Notes <span style="font-weight:400">(optional)</span><input id="lgNote" placeholder="e.g. Finished problem set 4, still stuck on #7"></label>
+    <p class="muted" id="lgErr" role="alert" style="color:var(--pen);margin:10px 0 0"></p>
+    <div class="wiz-nav"><button class="btn ghost" id="lgCancel">Cancel</button><button class="btn" id="lgSave">Save session</button></div>`;
+  if(b && b.practice) form.practice = b.practice;
+  $$("#lgPr .chip", card).forEach(c=>c.addEventListener("click", ()=>{ form.practice = c.dataset.p; $$("#lgPr .chip", card).forEach(x=>x.setAttribute("aria-pressed", x===c)); }));
+  $$("#lgFo .chip", card).forEach(c=>c.addEventListener("click", ()=>{ form.focus = form.focus===c.dataset.f ? "" : c.dataset.f; $$("#lgFo .chip", card).forEach(x=>x.setAttribute("aria-pressed", x.dataset.f===form.focus)); }));
+  $("#lgCancel", card).addEventListener("click", closeModal);
+  $("#lgSave", card).addEventListener("click", ()=>{
+    const date = $("#lgDate", card).value, minutes = Math.round(num($("#lgMin", card).value)), cid = $("#lgCourse", card).value;
+    const err = $("#lgErr", card);
+    if(!isDate(date)){ err.textContent = "Pick the date you studied."; return; }
+    if(date > t){ err.textContent = "You can't log time in the future. Log it after you study."; return; }
+    if(minutes < 5){ err.textContent = "Add how many minutes you studied (at least 5)."; return; }
+    if(!form.practice){ err.textContent = "Choose how you studied."; return; }
+    const tw = wkMake(S, wkOf(date));
+    tw.sessions.push({id:uid(), date, courseId:cid, course:cname(S,cid), minutes, practice:form.practice, focus:form.focus, note:$("#lgNote", card).value.trim().slice(0,500), planId: b && wkOf(date)===wk ? b.id : ""});
+    save(); closeModal(); render(); toast("Logged " + mins(minutes) + " for " + cname(S,cid));
+  });
+  openModal();
+}
+function openModal(){ const m = $("#modal"); m.hidden = false; document.body.style.overflow = "hidden"; const f = $("select, input, button", $("#modalCard")); if(f) f.focus(); }
+function closeModal(){ $("#modal").hidden = true; document.body.style.overflow = ""; }
+$("#modal").addEventListener("click", e=>{ if(e.target.id === "modal") closeModal(); });
+document.addEventListener("keydown", e=>{ if(e.key === "Escape" && !$("#modal").hidden) closeModal(); });
+
+/* ================= wizards ================= */
+const PLAN_STEPS = ["My classes","What's due","When I'll study","Review"];
+const REF_STEPS = ["My numbers","My deadlines","What worked","Next week"];
+function startPlan(wk){ wkMake(S, wk); wiz = {type:"plan", wk, step:0, sel:new Set()}; viewWk = wk; render(); window.scrollTo({top:0}); }
+function startReflect(wk){
+  const w = wkMake(S, wk); const r = w.reflection;
+  wiz = {type:"reflect", wk, step:0, d: r ? JSON.parse(JSON.stringify(r)) : {goalMet:"", helped:"", wentWell:"", obstacles:[], obstacleNote:"", change:"", rmNote:""}};
+  viewWk = wk; render(); window.scrollTo({top:0});
+}
+function vWiz(){
+  if(wiz.type === "done") return vRefDone();
+  const steps = wiz.type === "plan" ? PLAN_STEPS : REF_STEPS;
+  const body = wiz.type === "plan" ? [vP0,vP1,vP2,vP3][wiz.step]() : [vR0,vR1,vR2,vR3][wiz.step]();
+  const last = wiz.step === steps.length-1;
+  return `<div class="sheet">
+    <div class="item" style="padding-top:0;margin-bottom:6px"><span class="muted" style="font-weight:700">${wiz.type==="plan" ? "Plan my week" : "Reflect on my week"}: ${weekLabel(wiz.wk)}</span><button class="btn ghost small" id="wzExit">Save and exit</button></div>
+    <div class="wiz-steps">${steps.map((s,i)=>`<span class="${i===wiz.step ? "on" : i<wiz.step ? "past" : ""}">${i+1}. ${s}</span>`).join("")}</div>
+    ${body}
+    <p id="wzErr" role="alert" style="color:var(--pen);margin:12px 0 0;font-weight:700"></p>
+    <div class="wiz-nav">${wiz.step ? `<button class="btn ghost" id="wzBack">Back</button>` : "<span></span>"}<button class="btn" id="wzNext">${last ? (wiz.type==="plan" ? "Save my plan" : "Submit my reflection") : "Next"}</button></div>
+  </div>`;
+}
+function bindWiz(){
+  const m = $("#main");
+  if(wiz.type === "done"){ bindRefDone(); return; }
+  $("#wzExit", m).addEventListener("click", ()=>{ if(wiz.type==="reflect") toast("Your reflection isn't submitted yet. Finish it any time."); wiz = null; view = "week"; render(); });
+  const bk = $("#wzBack", m); if(bk) bk.addEventListener("click", ()=>{ wiz.step--; render(); window.scrollTo({top:0}); });
+  $("#wzNext", m).addEventListener("click", ()=>{
+    const err = (wiz.type==="plan" ? [cP0,cP1,cP2,cP3] : [cR0,cR1,cR2,cR3])[wiz.step]();
+    if(err){ $("#wzErr", m).textContent = err; return; }
+    const steps = wiz.type === "plan" ? PLAN_STEPS : REF_STEPS;
+    if(wiz.step < steps.length-1){ wiz.step++; render(); window.scrollTo({top:0}); return; }
+    if(wiz.type === "plan"){
+      const w = wkMake(S, wiz.wk); w.planned = true; w.plannedAt = new Date().toISOString(); save();
+      wiz = null; view = "week"; render(); window.scrollTo({top:0}); toast("Your plan is saved. Log each session as you go.");
+    } else {
+      const w = wkMake(S, wiz.wk); w.reflection = Object.assign({}, wiz.d, {at:new Date().toISOString()}); save();
+      wiz = {type:"done", wk:wiz.wk}; render(); window.scrollTo({top:0});
+    }
+  });
+  (wiz.type==="plan" ? [bP0,bP1,bP2,bP3] : [bR0,bR1,bR2,bR3])[wiz.step](m);
+}
+
+/* ---- plan step 0: classes ---- */
+function vP0(){
+  const g = goalsFor(S, wiz.wk); const end = iso(addDays(parse(wiz.wk),6));
+  const tests = S.deadlines.filter(d=>TESTS.includes(d.type) && d.date >= wiz.wk && d.date <= end);
+  return `<h2>Your classes and study goals</h2>
+    <p class="lead">A good rule: plan 2 to 3 hours of studying outside class for every credit hour. Raise a goal in weeks with an exam.</p>
+    ${!S.profile.name ? `<div class="row" style="margin-bottom:16px"><label class="f">Your name<input id="pfName" value="${esc(S.profile.name)}" autocomplete="name" placeholder="First and last name"></label><label class="f">School<input id="pfSchool" value="${esc(S.profile.school)}" placeholder="e.g. UC Davis"></label></div>` : ""}
+    ${S.courses.length ? `<div class="scroll"><table><thead><tr><th>Class</th><th>Credits</th><th>Study goal this week (hrs)</th></tr></thead><tbody>
+      ${S.courses.map(c=>{ const t = tests.filter(d=>d.courseId===c.id); return `<tr><td><b>${esc(c.name)}</b>${t.length ? `<br><span class="tag pen">${esc(t[0].type)} ${fmt(t[0].date)}</span>` : ""}</td><td>${c.credits||"–"}</td><td><input type="number" min="0" max="40" step="0.5" data-goal="${c.id}" value="${g[c.id] ?? c.goal}" style="max-width:110px" aria-label="Study goal for ${esc(c.name)}"></td></tr>`; }).join("")}
+    </tbody></table></div>` : `<div class="empty">Add each class you're taking this term.</div>`}
+    <div class="row" style="margin-top:14px">
+      <label class="f">Add a class<input id="ncName" placeholder="e.g. Calculus I"></label>
+      <label class="f" style="flex:0 1 110px">Credits<input id="ncCr" type="number" min="0" max="10" step="0.5" value="4"></label>
+      <button class="btn ghost" id="ncAdd">Add class</button>
+    </div>
+    <p class="muted" style="margin-top:10px">You can edit or remove classes on the My classes tab.</p>`;
+}
+function bP0(m){
+  const n = $("#pfName", m); if(n){ n.addEventListener("input", ()=>{ S.profile.name = n.value.trim(); save(); }); $("#pfSchool", m).addEventListener("input", e=>{ S.profile.school = e.target.value.trim(); save(); }); }
+  $$("[data-goal]", m).forEach(i=>i.addEventListener("input", ()=>{ const w = wkMake(S, wiz.wk); w.goals[i.dataset.goal] = num(i.value); S.courses.forEach(c=>{ if(!(c.id in w.goals)) w.goals[c.id] = c.goal; }); save(); }));
+  const add = ()=>{ const name = $("#ncName", m).value.trim(); if(!name){ $("#ncName", m).focus(); return; }
+    if(S.courses.some(c=>c.name.toLowerCase()===name.toLowerCase())){ toast("That class is already on your list"); return; }
+    const cr = num($("#ncCr", m).value); const c = {id:uid(), name, credits:cr, goal: Math.round(cr*2.5*2)/2 || 3};
+    S.courses.push(c); const w = wkMake(S, wiz.wk); if(Object.keys(w.goals).length) w.goals[c.id] = c.goal; save(); render(); setTimeout(()=>{ const x = $("#ncName"); if(x) x.focus(); }, 0); };
+  $("#ncAdd", m).addEventListener("click", add);
+  $("#ncName", m).addEventListener("keydown", e=>{ if(e.key==="Enter") add(); });
+}
+function cP0(){
+  if(!S.courses.length) return "Add at least one class to keep going.";
+  const w = wkMake(S, wiz.wk); S.courses.forEach(c=>{ if(!(c.id in w.goals)) w.goals[c.id] = c.goal; }); save();
+  return "";
+}
+
+/* ---- plan step 1: due dates ---- */
+function vP1(){
+  const end = iso(addDays(parse(wiz.wk),6)), end2 = iso(addDays(parse(wiz.wk),13));
+  const list = S.deadlines.filter(d=>d.date >= wiz.wk && d.date <= end2).sort((a,b)=>a.date.localeCompare(b.date));
+  return `<h2>What's due?</h2>
+    <p class="lead">Check Canvas and each syllabus. Add every exam, quiz, and assignment due this week, plus anything big next week so you can start early.</p>
+    <div class="row">
+      <label class="f">Class<select id="ndCourse">${S.courses.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("")}</select></label>
+      <label class="f" style="flex:2 1 200px">What's due<input id="ndTitle" placeholder="e.g. Midterm 1, Problem Set 5"></label>
+      <label class="f" style="flex:0 1 150px">Type<select id="ndType">${TYPES.map(t=>`<option>${t}</option>`).join("")}</select></label>
+      <label class="f" style="flex:0 1 165px">Due date<input id="ndDate" type="date" min="${wiz.wk}"></label>
+      <button class="btn ghost" id="ndAdd">Add</button>
+    </div>
+    <div style="margin-top:16px">${list.length ? list.map(d=>`<div class="item"><span class="grow"><b>${esc(d.title)}</b> <span class="muted">${esc(cname(S,d.courseId,d.course))}, ${esc(d.type)}</span></span><span class="${d.date<=end ? "tag pen" : "tag"}">${fmt(d.date)}${d.date>end ? " (next week)" : ""}</span><button class="btn del" data-rmdl="${d.id}">Remove</button></div>`).join("")
+      : `<div class="empty">Nothing added yet. If nothing is due, that's fine. Tap Next.</div>`}</div>`;
+}
+function bP1(m){
+  const add = ()=>{
+    const title = $("#ndTitle", m).value.trim(), date = $("#ndDate", m).value, cid = $("#ndCourse", m).value;
+    if(!title){ toast("Add what's due"); $("#ndTitle", m).focus(); return; }
+    if(!isDate(date)){ toast("Pick the due date"); $("#ndDate", m).focus(); return; }
+    S.deadlines.push({id:uid(), courseId:cid, course:cname(S,cid), title, type:$("#ndType", m).value, date, done:false, ready:0});
+    save(); render(); setTimeout(()=>{ const x = $("#ndTitle"); if(x) x.focus(); }, 0);
+  };
+  $("#ndAdd", m).addEventListener("click", add);
+  $("#ndTitle", m).addEventListener("keydown", e=>{ if(e.key==="Enter") add(); });
+  $$("[data-rmdl]", m).forEach(b=>b.addEventListener("click", ()=>{ S.deadlines = S.deadlines.filter(d=>d.id!==b.dataset.rmdl); save(); render(); }));
+}
+function cP1(){ return ""; }
+
+/* ---- plan step 2: study blocks ---- */
+function vP2(){
+  const w = wkMake(S, wiz.wk), st = stats(S, wiz.wk);
+  const tests = st.dls.filter(d=>TESTS.includes(d.type));
+  const nextTests = S.deadlines.filter(d=>TESTS.includes(d.type) && d.date > iso(addDays(parse(wiz.wk),6)) && d.date <= iso(addDays(parse(wiz.wk),13)));
+  const ti = iso(today());
+  return `<h2>When will you study?</h2>
+    <p class="lead">Block out study time like it's a class. Shorter sessions spread over several days beat one long session.</p>
+    <div class="chips" style="margin-bottom:12px">${st.rows.filter(r=>r.goal>0).map(r=>{ const ok = r.planned >= r.goal*60; return `<span class="tag ${ok ? "go" : "warn"}">${esc(r.name)}: ${hNum(r.planned)} of ${r.goal} hrs planned</span>`; }).join("")}</div>
+    ${tests.length || nextTests.length ? `<div class="callout" style="margin:0 0 14px"><p><b>Exam tip:</b> ${[...tests,...nextTests].map(d=>`${esc(cname(S,d.courseId,d.course))} ${esc(d.type.toLowerCase())} on ${fmt(d.date)}`).join("; ")}. Plan at least 3 shorter sessions on different days before it, and use self-quizzing or practice problems instead of rereading.</p></div>` : ""}
+    <div class="muted" style="font-weight:700;font-size:.85rem;margin-bottom:6px">Which days?</div>
+    <div class="chips" id="pdDays">${DAYS.map((d,i)=>{ const di = dayDate(wiz.wk,i); return `<button type="button" class="chip" data-day="${i}" aria-pressed="${wiz.sel.has(i)}" ${di < ti ? "disabled style=\"opacity:.4\"" : ""}>${d} ${md(di).split(" ").pop()}</button>`; }).join("")}</div>
+    <div class="row" style="margin-top:12px">
+      <label class="f">Class<select id="pbCourse">${S.courses.map(c=>`<option value="${c.id}" ${wiz.lastCourse===c.id ? "selected" : ""}>${esc(c.name)}</option>`).join("")}</select></label>
+      <label class="f" style="flex:0 1 140px">Start time<input id="pbTime" type="time" value="${wiz.lastTime||""}" step="300"></label>
+      <label class="f" style="flex:0 1 130px">How long<select id="pbLen">${LENGTHS.map(n=>`<option value="${n}" ${(wiz.lastLen||60)==n ? "selected" : ""}>${mins(n)}</option>`).join("")}</select></label>
+      <label class="f">How I'll study<select id="pbPr"><option value="">Decide later</option>${PRACTICES.filter(p=>p!=="Other").map(p=>`<option>${esc(p)}</option>`).join("")}</select></label>
+      <button class="btn ghost" id="pbAdd">Add to plan</button>
+    </div>
+    <div class="daygrid" style="margin-top:16px">${DAYS.map((d,i)=>{ const bl = w.blocks.filter(b=>b.day===i).sort((a,b)=>(a.time||"99").localeCompare(b.time||"99"));
+      return `<div class="dcol"><h4>${d}<small>${bl.length ? hNum(bl.reduce((a,b)=>a+b.minutes,0)) + "h" : ""}</small></h4>${bl.map(b=>`<div class="blk"><div class="t">${b.time ? t12(b.time) + ", " : ""}${mins(b.minutes)}</div><div>${esc(cname(S,b.courseId,b.course))}</div>${b.practice ? `<div class="muted">${esc(b.practice)}</div>` : ""}${blockLogged(w,b) ? `<div class="acts"><span class="tag go">Logged</span></div>` : `<div class="acts"><button class="btn del" data-rmb="${b.id}">Remove</button></div>`}</div>`).join("") || `<div class="none">–</div>`}</div>`; }).join("")}</div>
+    <p class="muted" style="margin-top:12px">Total planned: <b>${hrs(st.planned)}</b>${st.goalMin ? ` of your ${hrs(st.goalMin)} goal` : ""}.</p>`;
+}
+function bP2(m){
+  $$("#pdDays .chip", m).forEach(c=>c.addEventListener("click", ()=>{ const i = +c.dataset.day; if(wiz.sel.has(i)) wiz.sel.delete(i); else wiz.sel.add(i); c.setAttribute("aria-pressed", wiz.sel.has(i)); }));
+  $("#pbAdd", m).addEventListener("click", ()=>{
+    if(!wiz.sel.size){ toast("Pick at least one day"); return; }
+    const cid = $("#pbCourse", m).value, time = $("#pbTime", m).value, len = +$("#pbLen", m).value, pr = $("#pbPr", m).value;
+    const w = wkMake(S, wiz.wk);
+    wiz.sel.forEach(day=>w.blocks.push({id:uid(), day, courseId:cid, course:cname(S,cid), minutes:len, time, practice:pr}));
+    wiz.lastCourse = cid; wiz.lastTime = time; wiz.lastLen = len; wiz.sel = new Set();
+    save(); render(); toast("Added to your plan");
+  });
+  $$("[data-rmb]", m).forEach(b=>b.addEventListener("click", ()=>{ const w = wkMake(S, wiz.wk); w.blocks = w.blocks.filter(x=>x.id!==b.dataset.rmb); save(); render(); }));
+}
+function cP2(){ const w = wkMake(S, wiz.wk); return w.blocks.length ? "" : "Add at least one study session to your plan."; }
+
+/* ---- plan step 3: review ---- */
+function vP3(){
+  const st = stats(S, wiz.wk);
+  const short = st.goalRows.filter(r=>r.planned < r.goal*60);
+  return `<h2>Review your plan</h2>
+    <div class="scroll"><table><thead><tr><th>Class</th><th>Goal</th><th>Planned</th><th></th></tr></thead><tbody>
+      ${st.rows.map(r=>`<tr><td><b>${esc(r.name)}</b></td><td>${r.goal ? r.goal + " hrs" : "–"}</td><td>${hrs(r.planned)}</td><td>${r.goal ? (r.planned >= r.goal*60 ? `<span class="tag go">On track</span>` : `<span class="tag warn">${hNum(r.goal*60 - r.planned)} hrs short</span>`) : ""}</td></tr>`).join("")}
+    </tbody></table></div>
+    <p style="margin-top:12px"><b>${st.dls.length}</b> thing${st.dls.length===1 ? "" : "s"} due this week. <b>${hrs(st.planned)}</b> of study time planned across <b>${new Set(st.w.blocks.map(b=>b.day)).size}</b> day${new Set(st.w.blocks.map(b=>b.day)).size===1 ? "" : "s"}.</p>
+    ${short.length ? `<div class="callout warn"><p>Your plan is short of your goal for ${short.map(r=>esc(r.name)).join(", ")}. Go back and add time, or lower the goal on step 1 if this week is lighter.</p></div>` : `<div class="callout"><p>Your plan covers all your study goals. Put these sessions in your phone calendar so you don't forget.</p></div>`}`;
+}
+function bP3(){}
+function cP3(){ return ""; }
+
+/* ---- reflect step 0: numbers + goal met ---- */
+function vR0(){
+  const st = stats(S, wiz.wk); const d = wiz.d;
+  const pr = Object.entries(st.practices).sort((a,b)=>b[1]-a[1]);
+  return `<h2>Your week in numbers</h2>
+    ${st.sessions ? "" : `<div class="callout warn" style="margin:0 0 14px"><p><b>You haven't logged any study time this week.</b> If you studied, log those sessions first so your numbers are right.</p><button class="btn small" id="rLog">Log study time</button></div>`}
+    <div class="scroll"><table><thead><tr><th>Class</th><th>Goal</th><th>Planned</th><th>Logged</th><th></th></tr></thead><tbody>
+      ${st.rows.map(r=>`<tr><td><b>${esc(r.name)}</b></td><td>${r.goal ? r.goal + " hrs" : "–"}</td><td>${hrs(r.planned)}</td><td>${hrs(r.logged)}</td><td>${r.goal ? (r.logged >= r.goal*60 - 0.5 ? `<span class="tag go">Met</span>` : `<span class="tag warn">${hNum(r.goal*60 - r.logged)} hrs short</span>`) : ""}</td></tr>`).join("") || `<tr><td colspan="5" class="muted">No classes yet.</td></tr>`}
+    </tbody></table></div>
+    <p style="margin-top:12px">You studied on <b>${st.days}</b> day${st.days===1 ? "" : "s"} across <b>${st.sessions}</b> session${st.sessions===1 ? "" : "s"}, and met ${st.metCount} of ${st.goalRows.length} class goal${st.goalRows.length===1 ? "" : "s"}.</p>
+    ${pr.length ? `<h4 style="margin-top:14px">How you studied</h4>${pr.map(([p,mn])=>`<div class="crow"><span>${esc(p)}${ACTIVE.has(p) ? ` <span class="tag go">active</span>` : ""}</span><div class="bar"><span style="width:${mn/st.logged*100}%;background:var(--focus)"></span></div><span class="muted">${hrs(mn)}</span></div>`).join("")}
+      <p class="muted" style="margin-top:8px">${st.logged ? Math.round(st.activeMin/st.logged*100) : 0}% of your time used active practices (self-quizzing, practice problems, flashcards, explaining, summarizing from memory). These build memory far better than rereading.</p>` : ""}
+    <h3 style="margin-top:20px">Did you meet your study goals this week?</h3>
+    <div class="choice" id="rGoal">${["yes","partly","no"].map(k=>`<button type="button" data-g="${k}" aria-pressed="${d.goalMet===k}">${GOAL_LABEL[k]}</button>`).join("")}</div>`;
+}
+function bR0(m){
+  const l = $("#rLog", m); if(l) l.addEventListener("click", ()=>openLog({wk:wiz.wk}));
+  $$("#rGoal button", m).forEach(b=>b.addEventListener("click", ()=>{ wiz.d.goalMet = b.dataset.g; $$("#rGoal button", m).forEach(x=>x.setAttribute("aria-pressed", x===b)); }));
+}
+function cR0(){ return wiz.d.goalMet ? "" : "Choose whether you met your study goals."; }
+
+/* ---- reflect step 1: deadlines ---- */
+function vR1(){
+  const st = stats(S, wiz.wk);
+  return `<h2>Your deadlines</h2>
+    <p class="lead">Check off what you turned in. For exams and quizzes, rate how prepared you felt going in.</p>
+    ${st.dls.length ? st.dls.map(d=>`<div class="item"><label class="grow" style="display:flex;gap:10px;align-items:flex-start;cursor:pointer"><input type="checkbox" data-rd="${d.id}" ${d.done ? "checked" : ""} style="width:20px;height:20px;flex:none;margin-top:2px;accent-color:var(--go)"><span><b>${esc(d.title)}</b> <span class="muted">${esc(cname(S,d.courseId,d.course))}, ${esc(d.type)}, ${fmt(d.date)}</span></span></label>
+      ${TESTS.includes(d.type) ? `<span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="muted">How prepared?</span>${[1,2,3,4,5].map(n=>`<button type="button" class="chip" data-ready="${d.id}" data-n="${n}" aria-pressed="${d.ready===n}" aria-label="${n} out of 5">${n}</button>`).join("")}</span>` : ""}</div>`).join("")
+      : `<div class="empty">Nothing was due this week.</div>`}
+    ${st.dls.some(d=>TESTS.includes(d.type)) ? `<p class="muted" style="margin-top:8px">1 = not at all prepared, 5 = very prepared</p>` : ""}`;
+}
+function bR1(m){
+  $$("[data-rd]", m).forEach(cb=>cb.addEventListener("change", ()=>{ const d = S.deadlines.find(x=>x.id===cb.dataset.rd); if(d){ d.done = cb.checked; save(); } }));
+  $$("[data-ready]", m).forEach(b=>b.addEventListener("click", ()=>{ const d = S.deadlines.find(x=>x.id===b.dataset.ready); if(!d) return; d.ready = +b.dataset.n; save(); $$(`[data-ready="${d.id}"]`, m).forEach(x=>x.setAttribute("aria-pressed", +x.dataset.n===d.ready)); }));
+}
+function cR1(){ return ""; }
+
+/* ---- reflect step 2: what worked ---- */
+function vR2(){
+  const st = stats(S, wiz.wk), d = wiz.d;
+  const used = Object.keys(st.practices).filter(p=>p!=="Not recorded");
+  const opts = used.length ? used : PRACTICES;
+  return `<h2>What worked, and what didn't?</h2>
+    <label class="f">Which way of studying helped you most this week?<select id="rHelp"><option value="">Choose one</option>${opts.map(p=>`<option ${d.helped===p ? "selected" : ""}>${esc(p)}</option>`).join("")}<option ${d.helped==="None of them really helped" ? "selected" : ""}>None of them really helped</option></select></label>
+    <label class="f" style="margin-top:14px">What went well with your studying?<textarea id="rWell" placeholder="e.g. Studying right after class helped the lecture stick">${esc(d.wentWell)}</textarea></label>
+    <div style="margin-top:14px"><div class="muted" style="font-weight:700;margin-bottom:6px">What got in the way? <span style="font-weight:400">(choose any)</span></div>
+      <div class="chips" id="rObs">${OBSTACLES.map(o=>`<button type="button" class="chip" data-o="${esc(o)}" aria-pressed="${d.obstacles.includes(o)}">${esc(o)}</button>`).join("")}</div></div>
+    <label class="f" style="margin-top:14px">Tell us more <span style="font-weight:400">(optional)</span><textarea id="rObsN" placeholder="What happened?">${esc(d.obstacleNote)}</textarea></label>`;
+}
+function bR2(m){
+  $("#rHelp", m).addEventListener("change", e=>{ wiz.d.helped = e.target.value; });
+  $("#rWell", m).addEventListener("input", e=>{ wiz.d.wentWell = e.target.value; });
+  $("#rObsN", m).addEventListener("input", e=>{ wiz.d.obstacleNote = e.target.value; });
+  $$("#rObs .chip", m).forEach(c=>c.addEventListener("click", ()=>{ const o = c.dataset.o, a = wiz.d.obstacles; const i = a.indexOf(o); if(i>=0) a.splice(i,1); else a.push(o); c.setAttribute("aria-pressed", a.includes(o)); }));
+}
+function cR2(){ if(!wiz.d.helped) return "Choose which way of studying helped most."; if(wiz.d.wentWell.trim().length < 3) return "Write a sentence about what went well."; return ""; }
+
+/* ---- reflect step 3: next week ---- */
+function vR3(){
+  const d = wiz.d, st = stats(S, wiz.wk);
+  const hint = d.goalMet === "yes" ? "What will you keep doing, or push a little further?" : d.obstacles.length ? "Think about what got in the way: " + d.obstacles.slice(0,2).join(", ").toLowerCase() + "." : "What's one small, specific change?";
+  return `<h2>Looking ahead</h2>
+    <label class="f">One thing I'll do differently next week<span style="font-weight:400">${esc(hint)}</span><textarea id="rChg" placeholder="e.g. Study Chem right after lab on Tue and Thu instead of waiting until the weekend">${esc(d.change)}</textarea></label>
+    <label class="f" style="margin-top:14px">Anything you want your Relationship Manager to know? <span style="font-weight:400">(optional)</span><textarea id="rRm" placeholder="Questions, wins, or anything you'd like help with">${esc(d.rmNote)}</textarea></label>
+    ${st.activeMin < st.logged/2 && st.logged ? `<div class="callout"><p>Idea: most of your time this week went to rereading or passive study. Try swapping one session for self-quizzing or practice problems.</p></div>` : ""}`;
+}
+function bR3(m){ $("#rChg", m).addEventListener("input", e=>{ wiz.d.change = e.target.value; }); $("#rRm", m).addEventListener("input", e=>{ wiz.d.rmNote = e.target.value; }); }
+function cR3(){ return wiz.d.change.trim().length < 3 ? "Write one thing you'll do differently next week." : ""; }
+
+function vRefDone(){
+  const nw = shiftWk(wiz.wk,1), nwd = wkData(S, nw);
+  return `<div class="sheet" style="border-left:6px solid var(--go)">
+    <h2>Reflection saved</h2>
+    <p>Nice work looking back on ${weekLabel(wiz.wk)}. Now send your update so your Relationship Manager can see how it went.</p>
+    <div class="row"><button class="btn" id="dnSend">Send update to my RM</button>${!(nwd && nwd.planned) && nw <= shiftWk(thisWk(),1) ? `<button class="btn ghost" id="dnPlan">Plan next week</button>` : ""}<button class="btn ghost" id="dnBack">Back to my week</button></div>
+  </div>`;
+}
+function bindRefDone(){
+  const nw = shiftWk(wiz.wk,1);
+  $("#dnSend").addEventListener("click", ()=>{ wiz = null; view = "share"; render(); setTimeout(()=>{ const el = $("#sendBox"); if(el) el.scrollIntoView({behavior:"smooth"}); }, 50); });
+  const p = $("#dnPlan"); if(p) p.addEventListener("click", ()=>startPlan(nw));
+  $("#dnBack").addEventListener("click", ()=>{ wiz = null; view = "week"; render(); });
+}
+
+/* ================= scholar: classes ================= */
+function vClasses(){
+  return `<h2>My classes</h2>
+    <p class="lead">Your default weekly study goal for each class. You can change a goal for any single week when you plan it.</p>
+    <div class="sheet">${S.courses.length ? `<div class="scroll"><table><thead><tr><th>Class</th><th>Credits</th><th>Weekly goal (hrs)</th><th></th></tr></thead><tbody>
+      ${S.courses.map(c=>`<tr data-c="${c.id}"><td><input data-k="name" value="${esc(c.name)}" aria-label="Class name"></td><td><input data-k="credits" type="number" min="0" max="10" step="0.5" value="${c.credits}" style="max-width:90px" aria-label="Credits"></td><td><input data-k="goal" type="number" min="0" max="40" step="0.5" value="${c.goal}" style="max-width:100px" aria-label="Weekly goal"></td><td><button class="btn del" data-del="${c.id}">Remove</button></td></tr>`).join("")}
+    </tbody></table></div>` : `<div class="empty">No classes yet.</div>`}
+    <div class="row" style="margin-top:14px"><label class="f">Add a class<input id="ncName" placeholder="e.g. Intro to Psychology"></label><label class="f" style="flex:0 1 110px">Credits<input id="ncCr" type="number" min="0" max="10" step="0.5" value="4"></label><button class="btn" id="ncAdd">Add class</button></div>
+    <p class="muted" style="margin-top:12px">New term? Remove old classes and add your new ones. Your past weeks keep their history.</p></div>
+    <div class="sheet"><h3>About me</h3><div class="row">
+      <label class="f">Name<input data-pf="name" value="${esc(S.profile.name)}" autocomplete="name"></label>
+      <label class="f">School<input data-pf="school" value="${esc(S.profile.school)}"></label>
+      <label class="f">My Relationship Manager<input data-pf="rm" value="${esc(S.profile.rm)}" placeholder="Their name"></label></div></div>`;
+}
+function bindClasses(){
+  const m = $("#main");
+  $$("tr[data-c]", m).forEach(tr=>{ const c = S.courses.find(x=>x.id===tr.dataset.c);
+    $$("[data-k]", tr).forEach(i=>i.addEventListener("input", ()=>{ const k = i.dataset.k; c[k] = k==="name" ? i.value : num(i.value); if(k==="credits"){ c.goal = Math.round(c.credits*2.5*2)/2; $("[data-k=goal]", tr).value = c.goal; } save(); })); });
+  $$("[data-del]", m).forEach(b=>b.addEventListener("click", ()=>{ if(!armed(b, "Tap again")) return; S.courses = S.courses.filter(c=>c.id!==b.dataset.del); save(); render(); }));
+  const add = ()=>{ const name = $("#ncName", m).value.trim(); if(!name) return; const cr = num($("#ncCr", m).value); S.courses.push({id:uid(), name, credits:cr, goal:Math.round(cr*2.5*2)/2 || 3}); save(); render(); toast("Class added"); };
+  $("#ncAdd", m).addEventListener("click", add); $("#ncName", m).addEventListener("keydown", e=>{ if(e.key==="Enter") add(); });
+  $$("[data-pf]", m).forEach(i=>i.addEventListener("input", ()=>{ S.profile[i.dataset.pf] = i.value.trim(); save(); }));
+}
+
+/* ================= scholar: history ================= */
+function vHistory(){
+  const wks = weeksWithData(S);
+  const done = wks.filter(k=>S.weeks[k].reflection);
+  const metN = done.filter(k=>S.weeks[k].reflection.goalMet==="yes").length;
+  return `<h2>Past weeks</h2>
+    <p class="lead">Look for patterns: which weeks went well, and what was different about them?</p>
+    ${done.length ? `<div class="callout" style="margin:0 0 18px"><p>You've reflected on <b>${done.length}</b> week${done.length===1 ? "" : "s"} and said you met your goals in <b>${metN}</b>.</p></div>` : ""}
+    <div class="sheet">${wks.length ? `<div class="scroll"><table><thead><tr><th>Week</th><th>Goal</th><th>Planned</th><th>Logged</th><th>My reflection</th><th></th></tr></thead><tbody>
+      ${wks.map(k=>{ const st = stats(S,k), r = S.weeks[k].reflection; return `<tr><td><b>${weekLabel(k)}</b>${k===thisWk() ? ` <span class="tag">This week</span>` : ""}</td><td>${st.goalMin ? hrs(st.goalMin) : "–"}</td><td>${hrs(st.planned)}</td><td>${hrs(st.logged)} ${st.met ? `<span class="tag go">Met</span>` : ""}</td><td>${r ? `<span class="tag ${r.goalMet==="yes" ? "go" : r.goalMet==="no" ? "pen" : "warn"}">${esc(GOAL_SHORT[r.goalMet])}</span>` : (k < thisWk() ? `<span class="muted">Not done</span>` : "")}</td><td><button class="btn ghost small" data-open="${k}">Open</button></td></tr>`; }).join("")}
+    </tbody></table></div>` : `<div class="empty">Your weeks will show up here once you start planning.</div>`}</div>
+    ${done.length ? `<div class="sheet"><h3>What I said I'd change</h3>${done.slice(0,8).map(k=>`<div class="item"><span class="grow"><span class="muted">${weekLabel(k)}</span><br>${esc(S.weeks[k].reflection.change)}</span></div>`).join("")}</div>` : ""}`;
+}
+function bindHistory(){ $$("[data-open]").forEach(b=>b.addEventListener("click", ()=>{ viewWk = b.dataset.open; view = "week"; render(); window.scrollTo({top:0}); })); }
+
+/* ================= scholar: share & backup ================= */
+function reportPayload(){ return JSON.stringify({app:APP, kind:"report", version:1, sent:new Date().toISOString(), scholar:S}); }
+function backupPayload(){ return JSON.stringify({app:APP, kind:"backup", version:1, exported:new Date().toISOString(), state:S}); }
+function fileBase(){ return slug(S.profile.name) || "scholar"; }
+function vShare(){
+  const wks = weeksWithData(S); const lb = S.lastBackup;
+  return `<h2>Share &amp; back up</h2>
+    <p class="lead">Everything you enter is saved in this browser on this device only. Nobody else can see it unless you send it.</p>
+    <div class="sheet" id="sendBox" style="border-left:6px solid var(--go)">
+      <h3>Send an update to my Relationship Manager</h3>
+      <p>Do this each week after you reflect. Download your update file, then attach it to an email or Slack message to ${S.profile.rm ? esc(S.profile.rm) : "your RM"}.</p>
+      ${!S.profile.name ? `<label class="f" style="margin-bottom:10px">Your name (so your RM knows it's you)<input id="shName" autocomplete="name"></label>` : ""}
+      <div class="row"><button class="btn" id="shDl">Download my update</button><button class="btn ghost" id="shCopy">Copy as text instead</button></div>
+      <p class="muted" style="margin-top:10px">Your update includes your classes, deadlines, study plans, logged sessions, and reflections. ${S.lastSent ? "Last sent " + fmt(new Date(S.lastSent)) + "." : ""}</p>
+    </div>
+    <div class="sheet">
+      <h3>Use on another device</h3>
+      <p class="muted">Download a backup, then open this same Scheduler file on your other computer or phone and load the backup there. ${lb ? "Last backup: " + fmt(new Date(lb)) + "." : "You haven't made a backup yet."}</p>
+      <div class="row"><button class="btn" id="bkDl">Download backup</button><button class="btn ghost" id="bkCopy">Copy backup as text</button></div>
+      <h4 style="margin-top:18px">Load a backup</h4>
+      <label class="f">Backup file<input type="file" id="imFile" accept=".json,application/json,text/plain"></label>
+      <details style="margin-top:10px"><summary>Or paste backup text</summary><textarea id="imText" style="margin-top:8px;font-family:ui-monospace,monospace;font-size:.8rem"></textarea><button class="btn ghost" id="imGo" style="margin-top:8px">Check this backup</button></details>
+      ${pendingImport ? `<div class="callout"><p><b>Backup for ${esc(pendingImport.profile.name || "a scholar")}</b>, with ${pendingImport.courses.length} class${pendingImport.courses.length===1 ? "" : "es"} and ${weeksWithData(pendingImport).length} week${weeksWithData(pendingImport).length===1 ? "" : "s"} of planning.</p>
+        <p>${wks.length || S.courses.length ? "This will <b>replace</b> what's in this browser now. Download a backup first if you want to keep it." : "Nothing in this browser will be lost."}</p>
+        <div class="row"><button class="btn" id="imOk">Load this backup</button><button class="btn ghost" id="imNo">Cancel</button></div></div>` : ""}
+      ${msg ? `<p class="muted" role="status" style="margin-top:12px">${esc(msg)}</p>` : ""}
+      <details style="margin-top:18px"><summary>Start over on this device</summary><p class="muted" style="margin-top:8px">Erase everything saved in this browser.</p><button class="btn del" id="wipe" style="border:1.5px solid var(--pen)">Erase all my data</button></details>
+    </div>`;
+}
+function bindShare(){
+  const m = $("#main");
+  const nm = $("#shName", m); if(nm) nm.addEventListener("input", ()=>{ S.profile.name = nm.value.trim(); save(); });
+  const needName = ()=>{ if(!S.profile.name){ toast("Add your name first"); if(nm) nm.focus(); return true; } return false; };
+  $("#shDl", m).addEventListener("click", ()=>{ if(needName()) return; if(download("study-update-" + fileBase() + "-" + iso(today()) + ".json", reportPayload())){ S.lastSent = new Date().toISOString(); save(); msg = ""; render(); toast("Update downloaded. Now attach it to an email to your RM."); } });
+  $("#shCopy", m).addEventListener("click", async ()=>{ if(needName()) return; if(await copy(reportPayload())){ S.lastSent = new Date().toISOString(); save(); render(); toast("Copied. Paste it into an email or message to your RM."); } else toast("Your browser blocked copying. Use Download instead."); });
+  $("#bkDl", m).addEventListener("click", ()=>{ if(download("study-scheduler-backup-" + fileBase() + "-" + iso(today()) + ".json", backupPayload())){ S.lastBackup = new Date().toISOString(); save(); msg = "Backup downloaded. Email it to yourself or save it to Google Drive."; render(); } });
+  $("#bkCopy", m).addEventListener("click", async ()=>{ if(await copy(backupPayload())){ S.lastBackup = new Date().toISOString(); save(); msg = "Copied. Paste it into a note or email to yourself."; render(); } else toast("Your browser blocked copying. Use Download instead."); });
+  const take = t => { try { const o = JSON.parse(String(t).trim()); if(!o || o.app!==APP) throw 0; const src = o.kind==="backup" ? o.state : o.kind==="report" ? o.scholar : null; if(!isObj(src)) throw 0; pendingImport = normScholar(src); msg = ""; } catch(e){ pendingImport = null; msg = "That doesn't look like a Study Scheduler backup."; } render(); };
+  $("#imFile", m).addEventListener("change", async e=>{ const f = e.target.files[0]; if(f) take(await f.text()); });
+  $("#imGo", m).addEventListener("click", ()=>take($("#imText", m).value));
+  const ok = $("#imOk", m); if(ok) ok.addEventListener("click", ()=>{ if((weeksWithData(S).length || S.courses.length) && !armed(ok, "Tap again to replace")) return; S = pendingImport; S.lastBackup = new Date().toISOString(); save(); pendingImport = null; msg = "Backup loaded. You're all set on this device."; render(); toast("Backup loaded"); });
+  const no = $("#imNo", m); if(no) no.addEventListener("click", ()=>{ pendingImport = null; render(); });
+  $("#wipe", m).addEventListener("click", e=>{ if(!armed(e.target, "Tap again to erase everything")) return; S = blankScholar(); save(); msg = "Everything was erased."; render(); });
+}
+
+/* ================= RM ================= */
+function normRoster(o){
+  const r = {scholars:{}}; if(!isObj(o) || !isObj(o.scholars)) return r;
+  Object.keys(o.scholars).slice(0,300).forEach(id=>{ const e = o.scholars[id]; if(isObj(e) && isObj(e.data)){ const d = normScholar(e.data); r.scholars[d.id] = {sent:str(e.sent), loaded:str(e.loaded), data:d}; } });
+  return r;
+}
+function ingest(text){
+  let o; try { o = JSON.parse(String(text).trim()); } catch(e){ return "bad"; }
+  if(!o || o.app!==APP) return "bad";
+  if(o.kind === "rm-roster"){ const rr = normRoster(o.roster); let n = 0; Object.values(rr.scholars).forEach(e=>{ const cur = R.scholars[e.data.id]; if(!cur || e.sent > cur.sent){ R.scholars[e.data.id] = e; n++; } }); return "roster:" + n; }
+  const src = o.kind==="report" ? o.scholar : o.kind==="backup" ? o.state : null; if(!isObj(src)) return "bad";
+  const d = normScholar(src); const sent = str(o.sent || o.exported) || new Date().toISOString();
+  const cur = R.scholars[d.id];
+  if(cur && cur.sent >= sent) return "old";
+  R.scholars[d.id] = {sent, loaded:new Date().toISOString(), data:d};
+  return cur ? "updated" : "added";
+}
+function rmSummary(e){
+  const st = e.data, cw = thisWk(), pw = shiftWk(cw,-1);
+  const cs = stats(st, cw), cwd = wkData(st, cw);
+  const reflected = Object.keys(st.weeks).filter(k=>st.weeks[k].reflection).sort().reverse();
+  const lastRef = reflected[0] ? {wk:reflected[0], r:st.weeks[reflected[0]].reflection} : null;
+  const sentDay = e.sent ? parse(e.sent.slice(0,10)) : null;
+  const since = sentDay ? dayDiff(today(), sentDay) : 999;
+  const t = iso(today()), t14 = iso(addDays(today(),14));
+  const tests = st.deadlines.filter(d=>TESTS.includes(d.type) && d.date >= t && d.date <= t14).sort((a,b)=>a.date.localeCompare(b.date));
+  const flags = [];
+  if(since > 8) flags.push({t:"No update in " + since + " days", w:3});
+  const sentThisWk = e.sent && e.sent.slice(0,10) >= cw;
+  if(sentThisWk && !(cwd && cwd.planned)) flags.push({t:"No plan for this week", w:2});
+  if(reflected.length >= 2 && st.weeks[reflected[0]].reflection.goalMet !== "yes" && st.weeks[reflected[1]].reflection.goalMet !== "yes") flags.push({t:"Short of study goals 2 weeks in a row", w:2});
+  else if(lastRef && lastRef.r.goalMet === "no") flags.push({t:"Missed study goals last time", w:1});
+  const pwd = wkData(st, pw);
+  if(e.sent && e.sent.slice(0,10) >= cw && pwd && (pwd.planned || pwd.sessions.length) && !pwd.reflection) flags.push({t:"Skipped last week's reflection", w:1});
+  if(lastRef && lastRef.r.rmNote) flags.push({t:"Left you a note", w:2, note:true});
+  const lowReady = st.deadlines.filter(d=>TESTS.includes(d.type) && d.ready && d.ready <= 2 && d.date >= iso(addDays(today(),-14)));
+  if(lowReady.length) flags.push({t:"Felt unprepared for a recent " + lowReady[0].type.toLowerCase(), w:1});
+  return {cs, cwd, lastRef, since, tests, flags, score: flags.reduce((a,f)=>a+f.w,0), sentThisWk};
+}
+function vRm(){
+  const ids = Object.keys(R.scholars);
+  const rows = ids.map(id=>({id, e:R.scholars[id], s:rmSummary(R.scholars[id])}));
+  rows.sort((a,b)=> rmSort==="name" ? (a.e.data.profile.name||"").localeCompare(b.e.data.profile.name||"") : rmSort==="recent" ? (b.e.sent||"").localeCompare(a.e.sent||"") : (b.s.score - a.s.score) || (a.e.data.profile.name||"").localeCompare(b.e.data.profile.name||""));
+  return `<div class="sheet" style="border-left:6px solid var(--focus)">
+      <h3>Add scholar updates</h3>
+      <p class="muted">When scholars send you their update files, load them here. You can choose several files at once. A newer update from the same scholar replaces the older one.</p>
+      <label class="f">Update files<input type="file" id="rmFiles" multiple accept=".json,application/json,text/plain"></label>
+      <details style="margin-top:10px"><summary>Or paste an update a scholar copied as text</summary><textarea id="rmText" style="margin-top:8px;font-family:ui-monospace,monospace;font-size:.8rem"></textarea><button class="btn ghost" id="rmGo" style="margin-top:8px">Add this update</button></details>
+      ${msg ? `<p role="status" style="margin:12px 0 0;font-weight:700">${esc(msg)}</p>` : ""}
+    </div>
+    <div class="item" style="border:0;margin-bottom:10px"><h2 style="margin:0">My scholars <span class="muted" style="font-size:1rem;font-weight:400">(${ids.length})</span></h2>
+      ${ids.length > 1 ? `<label class="muted" style="display:flex;gap:8px;align-items:center">Sort by<select id="rmSort" style="width:auto"><option value="attn" ${rmSort==="attn" ? "selected" : ""}>Needs attention</option><option value="name" ${rmSort==="name" ? "selected" : ""}>Name</option><option value="recent" ${rmSort==="recent" ? "selected" : ""}>Latest update</option></select></label>` : ""}</div>
+    ${rows.length ? `<div class="roster">${rows.map(({id,e,s})=>{ const p = e.data.profile;
+      return `<button class="scard ${s.score>=2 ? "attn" : ""}" data-open="${esc(id)}">
+        <span><span class="nm">${esc(p.name || "Unnamed scholar")}</span><br><span class="muted">${esc(p.school || "")}${p.school ? ". " : ""}Updated ${e.sent ? fmt(new Date(e.sent)) : "unknown"}${s.since<999 ? " (" + (s.since===0 ? "today" : s.since + " day" + (s.since===1 ? "" : "s") + " ago") + ")" : ""}</span></span>
+        <span class="kv"><b>This week</b><span>${s.sentThisWk ? (s.cwd && s.cwd.planned ? "Planned " + hNum(s.cs.planned) + "h, logged " + hNum(s.cs.logged) + " of " + hNum(s.cs.goalMin) + "h" : "Not planned yet") : "No update yet this week"}</span>
+          <b>Last reflection</b><span>${s.lastRef ? esc(GOAL_SHORT[s.lastRef.r.goalMet]) + " (" + md(s.lastRef.wk) + ")" : "None yet"}</span>
+          <b>Tests soon</b><span>${s.tests.length ? s.tests.slice(0,2).map(d=>esc(cname(e.data,d.courseId,d.course)) + " " + esc(d.type.toLowerCase()) + " " + md(d.date)).join(", ") + (s.tests.length>2 ? " +" + (s.tests.length-2) : "") : "None in the next 2 weeks"}</span></span>
+        ${s.flags.length ? `<span class="chips">${s.flags.map(f=>`<span class="tag ${f.note ? "go" : f.w>=2 ? "pen" : "warn"}">${esc(f.t)}</span>`).join("")}</span>` : `<span class="chips"><span class="tag go">On track</span></span>`}
+      </button>`; }).join("")}</div>`
+    : `<div class="empty"><p><b>No scholars yet.</b></p><p style="margin:0">Share the Scholar Study Scheduler file (scholar-study-scheduler.html) with your scholars. Each week they'll tap <b>Share &amp; back up → Download my update</b> and send you the file. Load those files above.</p></div>`}
+    ${ids.length ? `<div class="sheet" style="margin-top:20px"><h3>My dashboard data</h3>
+      <p class="muted">Your scholar roster is saved in this browser only. Download a copy to keep it safe or move it to another computer.</p>
+      <div class="row"><button class="btn ghost" id="rmCsv">Download summary spreadsheet (CSV)</button><button class="btn ghost" id="rmBk">Download roster backup</button></div>
+      <p class="muted" style="margin-top:10px">To load a roster backup, choose it with "Update files" above.</p></div>` : ""}`;
+}
+function bindRm(){
+  const m = $("#main");
+  const report = res => { const c = {added:0, updated:0, old:0, bad:0, roster:0}; res.forEach(r=>{ if(r.startsWith("roster:")) c.roster += +r.split(":")[1]; else c[r]++; });
+    saveR(); const parts = []; if(c.added) parts.push(c.added + " new scholar" + (c.added===1 ? "" : "s")); if(c.updated) parts.push(c.updated + " updated"); if(c.roster) parts.push(c.roster + " from roster backup"); if(c.old) parts.push(c.old + " skipped (already loaded, or older than the one you have)"); if(c.bad) parts.push(c.bad + " couldn't be read (not a Study Scheduler update)");
+    msg = parts.length ? parts.join(", ") + "." : "Nothing new."; render(); };
+  $("#rmFiles", m).addEventListener("change", async e=>{ const fs = Array.from(e.target.files||[]); const res = []; for(const f of fs){ try { res.push(ingest(await f.text())); } catch(err){ res.push("bad"); } } report(res); });
+  $("#rmGo", m).addEventListener("click", ()=>{ const t = $("#rmText", m).value; if(!t.trim()) return; report([ingest(t)]); });
+  const so = $("#rmSort", m); if(so) so.addEventListener("change", ()=>{ rmSort = so.value; render(); });
+  $$("[data-open]", m).forEach(b=>b.addEventListener("click", ()=>{ rmSel = b.dataset.open; msg = ""; render(); window.scrollTo({top:0}); }));
+  const csv = $("#rmCsv", m); if(csv) csv.addEventListener("click", ()=>{
+    const q = v => '"' + String(v==null?"":v).replace(/"/g,'""') + '"';
+    const head = ["Scholar","School","Last update","This week planned (hrs)","This week logged (hrs)","This week goal (hrs)","Last reflection week","Met goals?","Helped most","Got in the way","Change for next week","Note to RM","Flags"];
+    const lines = [head.map(q).join(",")].concat(Object.values(R.scholars).map(e=>{ const s = rmSummary(e), r = s.lastRef;
+      return [e.data.profile.name, e.data.profile.school, e.sent ? e.sent.slice(0,10) : "", s.sentThisWk ? hNum(s.cs.planned) : "", s.sentThisWk ? hNum(s.cs.logged) : "", s.sentThisWk ? hNum(s.cs.goalMin) : "", r ? r.wk : "", r ? GOAL_SHORT[r.r.goalMet] : "", r ? r.r.helped : "", r ? r.r.obstacles.join("; ") + (r.r.obstacleNote ? " - " + r.r.obstacleNote : "") : "", r ? r.r.change : "", r ? r.r.rmNote : "", s.flags.map(f=>f.t).join("; ")].map(q).join(","); }));
+    download("scholar-study-summary-" + iso(today()) + ".csv", lines.join("\n"), "text/csv");
+  });
+  const bk = $("#rmBk", m); if(bk) bk.addEventListener("click", ()=>download("rm-roster-backup-" + iso(today()) + ".json", JSON.stringify({app:APP, kind:"rm-roster", version:1, exported:new Date().toISOString(), roster:R})));
+}
+function vRmDetail(id){
+  const e = R.scholars[id], st = e.data, p = st.profile, s = rmSummary(e);
+  const wks = weeksWithData(st);
+  const t = iso(today());
+  const upcoming = st.deadlines.filter(d=>d.date >= t && !d.done).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,12);
+  return `<button class="btn ghost small" id="rmBack" style="margin-bottom:14px">‹ All scholars</button>
+    <div class="sheet">
+      <div class="item" style="padding-top:0"><div class="grow"><h2 style="margin:0">${esc(p.name || "Unnamed scholar")}</h2><span class="muted">${esc(p.school)}${p.school ? ". " : ""}Update from ${e.sent ? fmt(new Date(e.sent)) : "unknown date"}. Shows what the scholar had entered when they sent it.</span></div>
+        <span class="row"><button class="btn ghost small" id="rmNotes">Copy summary for my notes</button><button class="btn del" id="rmDel">Remove scholar</button></span></div>
+      ${s.flags.length ? `<div class="chips" style="margin-top:10px">${s.flags.map(f=>`<span class="tag ${f.note ? "go" : f.w>=2 ? "pen" : "warn"}">${esc(f.t)}</span>`).join("")}</div>` : ""}
+      ${s.lastRef && s.lastRef.r.rmNote ? `<h4 style="margin-top:14px">Note to you (week of ${md(s.lastRef.wk)})</h4><div class="quote note">${esc(s.lastRef.r.rmNote)}</div>` : ""}
+      <div class="kv" style="margin-top:12px"><b>Classes</b><span>${st.courses.map(c=>esc(c.name) + " (" + c.goal + " hrs/wk goal)").join(", ") || "None"}</span></div>
+    </div>
+    <div class="sheet"><h3>Coming up</h3>${upcoming.length ? upcoming.map(d=>`<div class="item"><span class="grow"><b>${esc(d.title)}</b> <span class="muted">${esc(cname(st,d.courseId,d.course))}, ${esc(d.type)}</span></span><span class="${TESTS.includes(d.type) ? "tag pen" : "muted"}">${fmt(d.date)}</span></div>`).join("") : `<p class="muted" style="margin:0">No upcoming deadlines entered.</p>`}</div>
+    <div class="sheet"><h3>Week by week</h3>
+      ${wks.length ? wks.map((k,i)=>{ const ws = stats(st,k), r = ws.w.reflection; const pr = Object.entries(ws.practices).sort((a,b)=>b[1]-a[1]);
+        return `<details class="wk" ${i===0 ? "open" : ""}><summary>${weekLabel(k)} <span class="tag">${ws.w.planned ? "Planned " + hNum(ws.planned) + "h" : "No plan"}</span><span class="tag">Logged ${hNum(ws.logged)}${ws.goalMin ? " of " + hNum(ws.goalMin) : ""}h</span>${r ? `<span class="tag ${r.goalMet==="yes" ? "go" : r.goalMet==="no" ? "pen" : "warn"}">${esc(GOAL_SHORT[r.goalMet])}</span>` : `<span class="tag">No reflection</span>`}</summary>
+          <div style="margin-top:12px" class="scroll"><table><thead><tr><th>Class</th><th>Goal</th><th>Planned</th><th>Logged</th></tr></thead><tbody>${ws.rows.map(rw=>`<tr><td>${esc(rw.name)}</td><td>${rw.goal ? rw.goal + " hrs" : "–"}</td><td>${hrs(rw.planned)}</td><td>${hrs(rw.logged)} ${rw.goal && rw.logged >= rw.goal*60 - 0.5 ? `<span class="tag go">Met</span>` : ""}</td></tr>`).join("")}</tbody></table></div>
+          <p class="muted" style="margin-top:8px">${ws.sessions} session${ws.sessions===1 ? "" : "s"} on ${ws.days} day${ws.days===1 ? "" : "s"}. ${ws.logged ? Math.round(ws.activeMin/ws.logged*100) + "% active practice." : ""}</p>
+          ${pr.length ? `<div class="kv"><b>Study methods</b><span>${pr.map(([pp,mn])=>esc(pp) + " (" + hNum(mn) + "h)").join(", ")}</span></div>` : ""}
+          ${ws.dls.length ? `<h4 style="margin-top:12px">Due that week</h4>${ws.dls.map(d=>`<div class="item"><span class="grow">${d.done ? "✓ " : ""}<b>${esc(d.title)}</b> <span class="muted">${esc(cname(st,d.courseId,d.course))}, ${esc(d.type)}, ${fmt(d.date)}</span></span>${d.ready ? `<span class="tag ${d.ready<=2 ? "pen" : "go"}">Prepared: ${d.ready}/5</span>` : ""}${!d.done && d.date < t ? `<span class="tag warn">Not checked off</span>` : ""}</div>`).join("")}` : ""}
+          ${r ? `<h4 style="margin-top:14px">Reflection</h4>
+            <div class="kv"><b>Met goals?</b><span>${esc(GOAL_LABEL[r.goalMet]||"")}</span><b>Helped most</b><span>${esc(r.helped)}</span><b>Got in the way</b><span>${esc(r.obstacles.join(", ") || "Nothing selected")}</span></div>
+            ${r.wentWell ? `<div class="muted" style="margin-top:8px;font-weight:700">What went well</div><div class="quote">${esc(r.wentWell)}</div>` : ""}
+            ${r.obstacleNote ? `<div class="muted" style="font-weight:700">More about what got in the way</div><div class="quote">${esc(r.obstacleNote)}</div>` : ""}
+            ${r.change ? `<div class="muted" style="font-weight:700">Change for next week</div><div class="quote">${esc(r.change)}</div>` : ""}
+            ${r.rmNote ? `<div class="muted" style="font-weight:700">Note to RM</div><div class="quote note">${esc(r.rmNote)}</div>` : ""}` : ""}
+        </details>`; }).join("") : `<div class="empty">This scholar hasn't planned any weeks yet.</div>`}
+    </div>`;
+}
+function bindRmDetail(id){
+  const m = $("#main");
+  $("#rmBack", m).addEventListener("click", ()=>{ rmSel = null; render(); });
+  $("#rmDel", m).addEventListener("click", e=>{ if(!armed(e.target, "Tap again to remove")) return; delete R.scholars[id]; saveR(); rmSel = null; msg = "Scholar removed."; render(); });
+  $("#rmNotes", m).addEventListener("click", async ()=>{
+    const e = R.scholars[id], st = e.data, s = rmSummary(e); const k = s.lastRef ? s.lastRef.wk : weeksWithData(st)[0];
+    let t = "Study Scheduler update: " + (st.profile.name||"Scholar") + " (sent " + (e.sent ? e.sent.slice(0,10) : "?") + ")\n";
+    if(k){ const ws = stats(st,k), r = ws.w.reflection;
+      t += "Week of " + weekLabel(k) + ": planned " + hNum(ws.planned) + " hrs, logged " + hNum(ws.logged) + " of " + hNum(ws.goalMin) + " hr goal, " + ws.sessions + " sessions on " + ws.days + " days.\n";
+      if(r){ t += "Met goals: " + (GOAL_SHORT[r.goalMet]||"") + "\nHelped most: " + r.helped + "\nWent well: " + r.wentWell + "\nGot in the way: " + (r.obstacles.join(", ") || "none") + (r.obstacleNote ? " (" + r.obstacleNote + ")" : "") + "\nChange next week: " + r.change + "\n" + (r.rmNote ? "Note to RM: " + r.rmNote + "\n" : ""); }
+    }
+    if(s.tests.length) t += "Upcoming tests: " + s.tests.map(d=>cname(st,d.courseId,d.course) + " " + d.type + " " + d.date).join("; ") + "\n";
+    if(await copy(t)) toast("Summary copied"); else toast("Couldn't copy in this browser");
+  });
+}
+
+/* ================= boot ================= */
+render();
+})();
+</script>
+</body>
+</html>
